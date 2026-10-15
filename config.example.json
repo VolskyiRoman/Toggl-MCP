@@ -1,0 +1,14 @@
+{
+  "workspaceId": 1234567,
+  "timezone": "Europe/London",
+  "idleGapMin": 20,
+  "tailMin": 5,
+  "minEntryMin": 5,
+  "repos": [
+    {
+      "path": "~/projects/my-app",
+      "projectId": 7654321,
+      "tags": ["claude"]
+    }
+  ]
+}
