@@ -8,20 +8,29 @@ const repoSchema = z.object({
   path: z.string().min(1),
   projectId: z.number().int().positive().nullable().default(null),
   tags: z.array(z.string()).default(['claude']),
-  gitAuthor: z.string().optional(),
   transcriptsDir: z.string().optional(),
-  defaultBranches: z.array(z.string()).default(['main', 'master']),
 });
 
 const configSchema = z.object({
   workspaceId: z.number().int().positive().optional(),
-  timezone: z.string().default(Intl.DateTimeFormat().resolvedOptions().timeZone),
+  timezone: z
+    .string()
+    .refine(isTimeZone, 'Unknown IANA timezone, e.g. "Europe/London"')
+    .default(Intl.DateTimeFormat().resolvedOptions().timeZone),
   idleGapMin: z.number().positive().default(20),
   tailMin: z.number().min(0).default(5),
   minEntryMin: z.number().min(0).default(5),
-  commitGraceMin: z.number().min(0).default(30),
   repos: z.array(repoSchema).min(1),
 });
+
+function isTimeZone(value: string): boolean {
+  try {
+    new Intl.DateTimeFormat('en', { timeZone: value });
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export type RepoConfig = z.infer<typeof repoSchema>;
 export type Config = z.infer<typeof configSchema>;
@@ -50,7 +59,13 @@ export async function loadConfig(): Promise<Config> {
   } catch {
     throw new Error(`Config not found at ${file}. Copy config.example.json there, or set TOGGL_MCP_CONFIG.`);
   }
-  const parsed = configSchema.safeParse(JSON.parse(raw));
+  let json: unknown;
+  try {
+    json = JSON.parse(raw);
+  } catch (error) {
+    throw new Error(`Config ${file} is not valid JSON: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  const parsed = configSchema.safeParse(json);
   if (!parsed.success) {
     throw new Error(`Invalid config ${file}:\n${z.prettifyError(parsed.error)}`);
   }

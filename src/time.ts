@@ -19,15 +19,20 @@ function zoneOffsetMs(utcMs: number, timeZone: string): number {
   return asUtc - Math.floor(utcMs / 1000) * 1000;
 }
 
-/** Start of a local calendar day in `timeZone`, as a UTC timestamp */
-export function startOfLocalDay(date: string, timeZone: string): number {
+/** A local wall-clock time in `timeZone` (`minutes` after midnight), as a UTC timestamp */
+export function zonedTime(date: string, minutes: number, timeZone: string): number {
   const match = DATE_RE.exec(date);
   if (!match) throw new Error(`Expected a date like 2025-01-31, got "${date}"`);
-  const naive = Date.UTC(+match[1]!, +match[2]! - 1, +match[3]!);
+  const naive = Date.UTC(+match[1]!, +match[2]! - 1, +match[3]!) + minutes * 60_000;
   // Two passes settle DST transitions.
   let utc = naive - zoneOffsetMs(naive, timeZone);
   utc = naive - zoneOffsetMs(utc, timeZone);
   return utc;
+}
+
+/** Start of a local calendar day in `timeZone`, as a UTC timestamp */
+export function startOfLocalDay(date: string, timeZone: string): number {
+  return zonedTime(date, 0, timeZone);
 }
 
 export function addDays(date: string, days: number): string {

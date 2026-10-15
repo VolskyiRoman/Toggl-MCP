@@ -90,7 +90,9 @@ export class TogglClient {
       body: body === undefined ? undefined : JSON.stringify(body),
     });
 
-    if ((response.status === 429 || response.status >= 500) && attempt < MAX_RETRIES) {
+    // A 5xx on POST may still have created the entry, so only reads retry on server errors.
+    const retryable = response.status === 429 || (response.status >= 500 && method === 'GET');
+    if (retryable && attempt < MAX_RETRIES) {
       const retryAfter = Number(response.headers.get('retry-after'));
       await new Promise((resolve) => setTimeout(resolve, retryAfter > 0 ? retryAfter * 1000 : 1000 * 2 ** attempt));
       return this.request(method, pathname, body, attempt + 1);

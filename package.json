@@ -1,7 +1,7 @@
 {
   "name": "toggl-mcp",
   "version": "0.1.0",
-  "description": "MCP server that fills Toggl Track from Claude Code sessions and git commits",
+  "description": "MCP server that fills Toggl Track from Claude Code sessions",
   "license": "MIT",
   "type": "module",
   "bin": {
